@@ -1,7 +1,8 @@
 const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const cookieParser = require("cookie-parser");
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
@@ -58,8 +59,9 @@ const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     res.status(400);
-    throw new Error("Please enter all fields");
+    throw new Error("Please enter fields");
   }
+
   const user = await User.findOne({ email });
   if (!user) {
     res.status(400);
@@ -91,9 +93,40 @@ const loginUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("Invalid");
   }
+  res.cookie.token = token;
+});
+
+const logout = asyncHandler(async (req, res) => {
+  res.cookie("token", "", {
+    path: "/",
+    httpOnly: true,
+    expires: new Date(0),
+    sameSite: "none",
+    secure: true,
+  });
+  return res.status(200).json({ message: "Successfully logged Out" });
+});
+
+const getUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  console.log(req.user);
+  if (user) {
+    const { _id, name, email, highestScore } = user;
+    res.status(200).json({
+      _id,
+      name,
+      email,
+      highestScore,
+    });
+  } else {
+    res.status(400);
+    throw new Error("User not found");
+  }
 });
 
 module.exports = {
   registerUser,
   loginUser,
+  logout,
+  getUser,
 };

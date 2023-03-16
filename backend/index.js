@@ -17,7 +17,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use("/api/users", userRoute);
+app.use("/users", userRoute);
 
 // Routes
 app.get("/", (req, res) => {
